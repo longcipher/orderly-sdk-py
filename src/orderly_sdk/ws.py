@@ -1,5 +1,8 @@
+
 """
-Orderly Async Websocket API Client
+Async WebSocket API clients for Orderly.Network EVM API (v2).
+
+This module provides public and private WebSocket managers for subscribing to real-time market and account data.
 """
 
 import asyncio
@@ -18,9 +21,18 @@ from .helpers import get_loop
 from .log import logger
 
 
+
 class WsTopicManager:
     """
-    Async Websocket API Base Client
+    Base class for Orderly async WebSocket API clients.
+
+    Handles connection, subscription, message dispatch, and topic queues.
+
+    Args:
+        _id (str): Client identifier.
+        account_id (str): User account ID.
+        endpoint (str): WebSocket endpoint URL.
+        loop: Asyncio event loop.
     """
 
     endpoint: str
@@ -69,7 +81,7 @@ class WsTopicManager:
 
     def start(self, timeout: Optional[int | float] = None, **kwargs):
         """
-        Start the websocket connection
+        Start the WebSocket connection in the event loop (non-blocking).
         """
         self.loop.call_soon_threadsafe(
             asyncio.create_task, self._connect(timeout, **kwargs)
@@ -77,26 +89,38 @@ class WsTopicManager:
 
     def subscribe(self, topic):
         """
-        Subscribe to a topic
+        Subscribe to a topic (creates a queue for topic events).
+
+        Args:
+            topic (str): Topic name.
         """
         self.queues[topic] = asyncio.Queue()
 
     async def do_subscribe(self, topic):
         """
-        Call subscribe to a topic
+        Send a subscribe request to the server for a topic.
+
+        Args:
+            topic (str): Topic name.
         """
         await self.send_json({"id": self._id, "event": "subscribe", "topic": topic})
 
     async def request(self, symbol: str):
         """
-        Request orderbook
+        Request orderbook for a symbol.
+
+        Args:
+            symbol (str): Market symbol.
         """
         params = {"params": {"type": "orderbook", "symbol": symbol}}
         await self.send_json({"id": self._id, "event": "request", **params})
 
     async def unsubscribe(self, topic):
         """
-        Unsubscribe from a topic
+        Unsubscribe from a topic and remove its queue.
+
+        Args:
+            topic (str): Topic name.
         """
         await self.websocket.send(
             jsonlib.dumps({"id": self._id, "event": "unsubscribe", "topic": topic})
@@ -105,7 +129,10 @@ class WsTopicManager:
 
     async def send_json(self, message):
         """
-        Send a json message
+        Send a JSON message to the WebSocket server.
+
+        Args:
+            message (dict): Message to send.
         """
         if "event" in message and message["event"] != "pong":
             logger.debug(f"sending message to {self.endpoint}: {message}")
@@ -131,7 +158,13 @@ class WsTopicManager:
 
     async def recv(self, topic, timeout=10):
         """
-        Receive a message from a topic
+        Receive a message from a topic queue.
+
+        Args:
+            topic (str): Topic name.
+            timeout (int): Timeout in seconds.
+        Returns:
+            dict: Message data.
         """
         res = None
         while not res:
@@ -161,9 +194,12 @@ class WsTopicManager:
             await self.do_subscribe(topic)
 
 
+
 class OrderlyPublicWsManager(WsTopicManager):
     """
-    Orderly Public Async Websocket API Client
+    Public async WebSocket API client for Orderly.Network.
+
+    Use to subscribe to public market data topics.
     """
 
     def __init__(
@@ -181,9 +217,12 @@ class OrderlyPublicWsManager(WsTopicManager):
         )
 
 
+
 class OrderlyPrivateWsManager(WsTopicManager):
     """
-    Orderly Private Async Websocket API Client
+    Private async WebSocket API client for Orderly.Network.
+
+    Use to subscribe to private account data topics (requires authentication).
     """
 
     def __init__(

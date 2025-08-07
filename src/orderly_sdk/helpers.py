@@ -1,5 +1,8 @@
+
 """
-Module for helper functions in Orderly SDK
+Helper functions for Orderly SDK.
+
+Provides utility functions for event loop management and async support.
 """
 
 import asyncio
@@ -7,8 +10,10 @@ import asyncio
 
 def get_loop():
     """
-    check if there is an event loop in the current thread, if not create one
-    inspired by https://stackoverflow.com/questions/46727787/runtimeerror-there-is-no-current-event-loop-in-thread-in-async-apscheduler
+    Get or create an asyncio event loop for the current thread.
+
+    Returns:
+        asyncio.AbstractEventLoop: The event loop.
     """
     try:
         loop = asyncio.get_event_loop()

@@ -1,6 +1,6 @@
 [project]
 name = "orderly-sdk"
-version = "0.3.0"
+version = "0.3.1"
 description = "Orderly Rest and Websocket SDK"
 authors = [
     { name = "Bob Liu", email = "akagi201@gmail.com" },
@@ -9,21 +9,21 @@ license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "aiohttp>=3.11.12",
+    "aiohttp>=3.12.15",
     "base58>=2.1.1",
-    "cryptography>=44.0.1",
-    "eth-keys>=0.6.1",
+    "cryptography>=45.0.6",
+    "eth-keys>=0.7.0",
     "loguru>=0.7.3",
-    "requests>=2.32.3",
-    "types-requests>=2.32.0.20241016",
-    "websockets>=15.0",
+    "requests>=2.32.4",
+    "types-requests>=2.32.4.20250611",
+    "websockets>=15.0.1",
 ]
 
 [dependency-groups]
 dev = [
-    "mypy>=1.15.0",
-    "pdoc>=15.0.1",
-    "ruff>=0.9.6",
+    "mypy>=1.17.1",
+    "pdoc>=15.0.4",
+    "ruff>=0.12.8",
 ]
 
 [build-system]
