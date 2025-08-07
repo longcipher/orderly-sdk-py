@@ -1,0 +1,57 @@
+# Pdoc configuration for Orderly SDK
+# https://pdoc.dev/docs/pdoc/render.html#configure-pdoc
+
+# Module to document
+modules:
+  - orderly_sdk
+
+# Output format
+format: html
+
+# Show source code
+show_source: true
+
+# Show type annotations
+show_type_annotations: true
+
+# Sort identifiers
+sort_identifiers: true
+
+# Include search functionality  
+search: true
+
+# Enable math rendering
+math: true
+
+# Google-style docstrings
+docformat: google
+
+# Don't include undocumented items unless they have type annotations
+include_undocumented: false
+
+# Template directory (if custom templates are needed)
+# template_directory: .github/pdoc_templates
+
+# Logo URL (optional)
+# logo: https://raw.githubusercontent.com/longcipher/orderly-sdk-py/master/.github/logo.png
+
+# Favicon (optional)  
+# favicon: https://raw.githubusercontent.com/longcipher/orderly-sdk-py/master/.github/favicon.ico
+
+# Edit URL template
+edit_url_map:
+  orderly_sdk: https://github.com/longcipher/orderly-sdk-py/tree/master/src/orderly_sdk
+
+# Footer text
+footer_text: |
+  <div style="text-align: center; margin-top: 2rem; padding: 1rem; border-top: 1px solid #e0e0e0;">
+    <p>
+      <strong>Orderly SDK for Python</strong> - 
+      <a href="https://github.com/longcipher/orderly-sdk-py" target="_blank">GitHub</a> | 
+      <a href="https://pypi.org/project/orderly-sdk/" target="_blank">PyPI</a> | 
+      <a href="https://orderly.network/docs/build-on-evm/building-on-evm" target="_blank">Official API Docs</a>
+    </p>
+    <p style="font-size: 0.9em; color: #666;">
+      Generated with <a href="https://pdoc.dev" target="_blank">pdoc</a>
+    </p>
+  </div>
