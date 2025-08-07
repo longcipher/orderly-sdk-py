@@ -73,6 +73,7 @@ class AsyncClient:
         self.response = None
 
     def _get_headers(self) -> Dict:
+        """Get default headers for HTTP requests."""
         headers = {
             "Accept": "application/json",
         }
@@ -81,6 +82,7 @@ class AsyncClient:
         return headers
 
     def _init_session(self) -> aiohttp.ClientSession:
+        """Initialize aiohttp client session with default headers."""
         return aiohttp.ClientSession(loop=self.loop, headers=self._get_headers())
 
     async def close_connection(self):
@@ -326,3 +328,111 @@ class AsyncClient:
         params = {"order_ids": formatted_order_ids}
 
         return await self._delete("batch-order", True, params=params)
+
+    async def get_order(self, order_id: str) -> Dict:
+        """
+        Get order details by order ID (private endpoint).
+
+        Args:
+            order_id (str): Order ID.
+        Returns:
+            dict: Order details.
+        """
+        return await self._get(f"order/{order_id}", True)
+
+    async def cancel_order(self, order_id: str) -> Dict:
+        """
+        Cancel a single order (private endpoint).
+
+        Args:
+            order_id (str): Order ID to cancel.
+        Returns:
+            dict: Cancel result.
+        """
+        return await self._delete(f"order/{order_id}", True)
+
+    async def get_orders(self, params: Optional[Dict] = None) -> Dict:
+        """
+        Get orders list (private endpoint).
+
+        Args:
+            params (dict, optional): Query parameters like status, symbol, etc.
+        Returns:
+            dict: Orders list.
+        """
+        return await self._get("orders", True, params=params)
+
+    async def get_trades(self, params: Optional[Dict] = None) -> Dict:
+        """
+        Get trades history (private endpoint).
+
+        Args:
+            params (dict, optional): Query parameters like symbol, start_time, etc.
+        Returns:
+            dict: Trades history.
+        """
+        return await self._get("trades", True, params=params)
+
+    async def get_funding_fee_history(self, params: Optional[Dict] = None) -> Dict:
+        """
+        Get funding fee history (private endpoint).
+
+        Args:
+            params (dict, optional): Query parameters.
+        Returns:
+            dict: Funding fee history.
+        """
+        return await self._get("funding_fee/history", True, params=params)
+
+    async def get_funding_rates(self, symbol: Optional[str] = None) -> Dict:
+        """
+        Get funding rates (public endpoint).
+
+        Args:
+            symbol (str, optional): Market symbol. If None, gets all symbols.
+        Returns:
+            dict: Funding rates.
+        """
+        if symbol:
+            return await self._get(f"public/funding_rate/{symbol}")
+        return await self._get("public/funding_rates")
+
+    async def get_orderbook(self, symbol: str, max_level: Optional[int] = None) -> Dict:
+        """
+        Get orderbook for a symbol (public endpoint).
+
+        Args:
+            symbol (str): Market symbol.
+            max_level (int, optional): Maximum depth level.
+        Returns:
+            dict: Orderbook data.
+        """
+        params = {}
+        if max_level is not None:
+            params["max_level"] = max_level
+        return await self._get(f"orderbook/{symbol}", params=params)
+
+    async def get_kline(self, symbol: str, kline_type: str, params: Optional[Dict] = None) -> Dict:
+        """
+        Get kline/candlestick data (public endpoint).
+
+        Args:
+            symbol (str): Market symbol.
+            kline_type (str): Kline type (e.g., "1m", "5m", "1h", "1d").
+            params (dict, optional): Additional query parameters.
+        Returns:
+            dict: Kline data.
+        """
+        return await self._get(f"kline/{symbol}/{kline_type}", params=params)
+
+    async def get_market_trades(self, symbol: str, params: Optional[Dict] = None) -> Dict:
+        """
+        Get recent market trades (public endpoint).
+
+        Args:
+            symbol (str): Market symbol.
+            params (dict, optional): Query parameters.
+        Returns:
+            dict: Recent market trades.
+        """
+        return await self._get(f"market_trades/{symbol}", params=params)

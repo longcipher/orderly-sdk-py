@@ -27,12 +27,29 @@ class WsTopicManager:
     Base class for Orderly async WebSocket API clients.
 
     Handles connection, subscription, message dispatch, and topic queues.
+    
+    This class manages WebSocket connections to Orderly Network and provides
+    topic-based message routing for real-time data streams.
+
+    Example:
+        ```python
+        ws_client = OrderlyPublicWsManager(
+            account_id="your_account_id", 
+            endpoint="wss://testnet-ws-evm.orderly.org/ws/stream/"
+        )
+        ws_client.subscribe("bbos")  # Subscribe to best bid/offer
+        ws_client.start()
+        
+        while True:
+            data = await ws_client.recv("bbos")
+            print(data)
+        ```
 
     Args:
-        _id (str): Client identifier.
+        _id (str): Client identifier for debugging.
         account_id (str): User account ID.
         endpoint (str): WebSocket endpoint URL.
-        loop: Asyncio event loop.
+        loop: Asyncio event loop (optional).
     """
 
     endpoint: str
@@ -199,7 +216,35 @@ class OrderlyPublicWsManager(WsTopicManager):
     """
     Public async WebSocket API client for Orderly.Network.
 
-    Use to subscribe to public market data topics.
+    Used for subscribing to public market data topics like:
+    - `bbos` - Best bid/offer updates
+    - `trade` - Real-time trade data  
+    - `orderbook` - Order book snapshots and updates
+    - `24h_ticker` - 24-hour ticker statistics
+    - `kline_1m`, `kline_5m`, etc. - Kline/candlestick data
+
+    Example:
+        ```python
+        ws = OrderlyPublicWsManager(
+            account_id="your_account_id",
+            endpoint="wss://testnet-ws-evm.orderly.org/ws/stream/"
+        )
+        
+        # Subscribe to multiple topics
+        ws.subscribe("bbos")
+        ws.subscribe("PERP_ETH_USDC@trade")  
+        ws.start()
+        
+        while True:
+            bbos_data = await ws.recv("bbos", timeout=30)
+            print(f"Best prices: {bbos_data}")
+        ```
+    
+    Args:
+        _id (str): Client identifier.
+        account_id (str): User account ID.
+        endpoint (str): WebSocket endpoint URL.
+        loop: Asyncio event loop.
     """
 
     def __init__(
@@ -216,13 +261,96 @@ class OrderlyPublicWsManager(WsTopicManager):
             loop=loop,
         )
 
+    async def subscribe_bbos(self):
+        """Subscribe to best bid/offer stream."""
+        self.subscribe("bbos")
+        await self.do_subscribe("bbos")
+
+    async def subscribe_trade(self, symbol: str):
+        """
+        Subscribe to trade stream for a symbol.
+        
+        Args:
+            symbol (str): Trading symbol (e.g., "PERP_ETH_USDC").
+        """
+        topic = f"{symbol}@trade"
+        self.subscribe(topic)
+        await self.do_subscribe(topic)
+
+    async def subscribe_orderbook(self, symbol: str):
+        """
+        Subscribe to orderbook updates for a symbol.
+        
+        Args:
+            symbol (str): Trading symbol (e.g., "PERP_ETH_USDC").
+        """
+        topic = f"{symbol}@orderbook"
+        self.subscribe(topic)
+        await self.do_subscribe(topic)
+
+    async def subscribe_ticker(self, symbol: Optional[str] = None):
+        """
+        Subscribe to 24h ticker data.
+        
+        Args:
+            symbol (str, optional): Trading symbol. If None, subscribes to all tickers.
+        """
+        topic = f"{symbol}@24h_ticker" if symbol else "24h_tickers"
+        self.subscribe(topic)
+        await self.do_subscribe(topic)
+
+    async def subscribe_kline(self, symbol: str, interval: str):
+        """
+        Subscribe to kline/candlestick data.
+        
+        Args:
+            symbol (str): Trading symbol (e.g., "PERP_ETH_USDC").
+            interval (str): Time interval (e.g., "1m", "5m", "1h", "1d").
+        """
+        topic = f"{symbol}@kline_{interval}"
+        self.subscribe(topic)
+        await self.do_subscribe(topic)
+
 
 
 class OrderlyPrivateWsManager(WsTopicManager):
     """
     Private async WebSocket API client for Orderly.Network.
 
-    Use to subscribe to private account data topics (requires authentication).
+    Used for subscribing to private account data topics that require authentication:
+    - `position` - Position updates
+    - `balance` - Balance updates  
+    - `order` - Order status updates
+    - `trade` - Private trade fills
+    - `liquidation` - Liquidation events
+    - `pnl` - PnL updates
+
+    Example:
+        ```python
+        ws = OrderlyPrivateWsManager(
+            account_id="your_account_id",
+            orderly_key="your_orderly_key", 
+            orderly_secret="your_orderly_secret",
+            endpoint="wss://testnet-ws-private-evm.orderly.org/v2/ws/private/stream/"
+        )
+        
+        # Subscribe to private data streams
+        ws.subscribe("position")
+        ws.subscribe("balance")
+        ws.start()
+        
+        while True:
+            position_data = await ws.recv("position")
+            print(f"Position update: {position_data}")
+        ```
+
+    Args:
+        _id (str): Client identifier.
+        account_id (str): User account ID.  
+        orderly_key (str): API key for authentication.
+        orderly_secret (str): API secret for signing.
+        endpoint (str): Private WebSocket endpoint URL.
+        loop: Asyncio event loop.
     """
 
     def __init__(
@@ -248,6 +376,7 @@ class OrderlyPrivateWsManager(WsTopicManager):
             )
 
     def _signature(self, data):
+        """Generate Ed25519 signature for authentication."""
         data_bytes = bytes(str(data), "utf-8")
         request_signature = base64.b64encode(
             self.orderly_private_key.sign(data_bytes)
@@ -255,6 +384,7 @@ class OrderlyPrivateWsManager(WsTopicManager):
         return request_signature
 
     async def _login(self) -> None:
+        """Authenticate with the private WebSocket endpoint."""
         ts = round(datetime.datetime.now().timestamp() * 1000)
         await self.send_json(
             {
@@ -268,8 +398,45 @@ class OrderlyPrivateWsManager(WsTopicManager):
             }
         )
 
+    async def subscribe_position(self):
+        """Subscribe to position updates."""
+        self.subscribe("position")
+        await self._login()
+        await self.do_subscribe("position")
+
+    async def subscribe_balance(self):
+        """Subscribe to balance updates."""
+        self.subscribe("balance")
+        await self._login()
+        await self.do_subscribe("balance")
+
+    async def subscribe_order(self):
+        """Subscribe to order status updates."""
+        self.subscribe("order")
+        await self._login()
+        await self.do_subscribe("order")
+
+    async def subscribe_trade(self):
+        """Subscribe to private trade fills."""
+        self.subscribe("trade")
+        await self._login()  
+        await self.do_subscribe("trade")
+
+    async def subscribe_liquidation(self):
+        """Subscribe to liquidation events."""
+        self.subscribe("liquidation")
+        await self._login()
+        await self.do_subscribe("liquidation")
+
+    async def subscribe_pnl(self):
+        """Subscribe to PnL updates."""
+        self.subscribe("pnl")
+        await self._login()
+        await self.do_subscribe("pnl")
+
     # reconnect, resubscribe
     async def _reconnect(self):
+        """Reconnect and re-authenticate, then re-subscribe to all topics."""
         for topic in self.queues.keys():
             await self._login()
             await self.do_subscribe(topic)
