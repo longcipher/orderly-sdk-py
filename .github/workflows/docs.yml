@@ -51,17 +51,23 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv sync --dev
+          uv sync --group dev
           
       - name: Generate documentation with pdoc
         run: |
           # Create docs directory
           mkdir -p docs
           
-          # Generate API documentation using pdoc with configuration file
+          # Generate API documentation using pdoc with command-line arguments
           uv run pdoc src/orderly_sdk \
             --output-directory docs \
-            --config-file .pdoc.yml
+            --docformat google \
+            --show-source \
+            --search \
+            --math \
+            --no-include-undocumented \
+            --edit-url "orderly_sdk=https://github.com/longcipher/orderly-sdk-py/tree/master/src/orderly_sdk/" \
+            --footer-text "Orderly SDK for Python - <a href='https://github.com/longcipher/orderly-sdk-py'>GitHub</a> | <a href='https://pypi.org/project/orderly-sdk/'>PyPI</a> | <a href='https://orderly.network/docs/build-on-evm/building-on-evm'>Official API Docs</a>"
           
           echo "📚 Documentation generated successfully!"
           echo "📁 Contents of docs directory:"
